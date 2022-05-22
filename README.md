@@ -1,9 +1,9 @@
 # PaintballRoom
 
-Splash Room is WebVR/AR application (Three.js/WebGL) for Oculus headset. 
+PaintballRoom is WebVR/AR application (Three.js/WebGL) for Oculus headset. 
 
 # Project presentation 
-https://docs.google.com/presentation/d/1HeU1b7NFOJsscUXbrwW66vaacomgky-13RR4VP_N6uA/edit#slide=id.p
+[PaintballRoom project presentation](https://docs.google.com/presentation/d/1HeU1b7NFOJsscUXbrwW66vaacomgky-13RR4VP_N6uA/edit#slide=id.p)
 
 ## Reference
 Draw decals:
