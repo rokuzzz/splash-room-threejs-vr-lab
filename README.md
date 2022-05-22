@@ -1,22 +1,7 @@
-# VRproject
+# PaintballRoom
 
-To be fixed:
-1. Shooting frequency of controller
-
-To be improved:
-1. (DONE) Soften shadows to improve performance
-2. (DONE) Random decal rotation along the axis, to make it looks like randomized
-3. (DONE) Splash color base on ball color
-4. Flies face point to camera
-5. Hit count; shoot count; time spend
-6. Throw and catch times without ball hitting ground
-
-Good to have:
-1. (DONE) Background
-2. (DONE) Models
-3. (DONE) Pick up object on hand, shoot when released
-4. (DONE) FPS stats
-5. (DONE) Add shooting target
+Project presentation 
+https://docs.google.com/presentation/d/1HeU1b7NFOJsscUXbrwW66vaacomgky-13RR4VP_N6uA/edit#slide=id.p
 
 ## Reference
 Draw decals:
