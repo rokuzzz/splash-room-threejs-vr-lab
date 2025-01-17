@@ -1,656 +1,552 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8" />
     <title>Splash room</title>
     <style>
         body {
             margin: 0;
+            overflow: hidden;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            z-index: 100;
+            font-family: sans-serif;
         }
     </style>
 </head>
-
 <body>
-    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
-    <script type="importmap">
-            {
-                "imports": {
-                    "three": "https://unpkg.com/three@0.139.2/build/three.module.js"
-                }
-            }
-            
-    </script>
-    <script type="module">
-        import * as THREE from "three";
-        import { OrbitControls } from "https://unpkg.com/three/examples/jsm/controls/OrbitControls.js";
-        import { GLTFLoader } from "https://unpkg.com/three/examples/jsm/loaders/GLTFLoader.js";
-        import { KTX2Loader } from "https://unpkg.com/three/examples/jsm/loaders/KTX2Loader.js";
-        import { MeshoptDecoder } from "https://unpkg.com/three/examples/jsm/libs/meshopt_decoder.module.js";
-        import { BoxLineGeometry } from "https://unpkg.com/three/examples/jsm/geometries/BoxLineGeometry.js";
-        import { VRButton } from "https://unpkg.com/three/examples/jsm/webxr/VRButton.js";
-        import { XRControllerModelFactory } from "https://unpkg.com/three/examples/jsm/webxr/XRControllerModelFactory.js";
-        import { DecalGeometry } from "https://unpkg.com/three/examples/jsm/geometries/DecalGeometry.js";
-        import { InteractiveGroup } from 'https://unpkg.com/three/examples/jsm/interactive/InteractiveGroup.js';
-        import { HTMLMesh } from 'https://unpkg.com/three/examples/jsm/interactive/HTMLMesh.js';
-        import { GUI } from 'https://unpkg.com/three/examples/jsm/libs/lil-gui.module.min.js';
-        import { createText } from 'https://unpkg.com/three/examples/jsm/webxr/Text2D.js';
-        import Stats from 'https://unpkg.com/three/examples/jsm/libs/stats.module.js';
-        import dat from "https://cdn.skypack.dev/dat.gui";
 
-        // Setup and constant
-        const radius = 0.08;        // Ball radius
-        const range = 5 - radius;   // Ball shooting range
-        let count = 0;
-        let normal = new THREE.Vector3();
-        const relativeVelocity = new THREE.Vector3();
-        const clock = new THREE.Clock();
-        const group = new THREE.Group();
-        const stats = new Stats();
-        let hitCount = 0;
-        const DECALS = 30;
-        const BALLS = 50;
-        const FLIES = 8;
-      
-        // Dat.gui
-        const gui = new dat.GUI();
+<div id="info">Serving from a local server is required!</div>
 
-        const world = {
-            plane: {
-                width: 8,
-                height: 8,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.5,
-                color: 0x695d45
-            },
-            walls: {
-                color: 0x4f4f4f
-            },
-            wall3: {
-                color: 0x4fffff
-            },
-            camera: {
-                position: {
-                    x: 0,
-                    y: 3,
-                    z: 3
-                }
-            }
+<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.139.2/build/three.module.js"
+  }
+}
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://unpkg.com/three@0.139.2/examples/jsm/controls/OrbitControls.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.139.2/examples/jsm/loaders/GLTFLoader.js';
+    import { KTX2Loader } from 'https://unpkg.com/three@0.139.2/examples/jsm/loaders/KTX2Loader.js';
+    import { MeshoptDecoder } from 'https://unpkg.com/three@0.139.2/examples/jsm/libs/meshopt_decoder.module.js';
+    import { BoxLineGeometry } from 'https://unpkg.com/three@0.139.2/examples/jsm/geometries/BoxLineGeometry.js';
+    import { VRButton } from 'https://unpkg.com/three@0.139.2/examples/jsm/webxr/VRButton.js';
+    import { XRControllerModelFactory } from 'https://unpkg.com/three@0.139.2/examples/jsm/webxr/XRControllerModelFactory.js';
+    import { DecalGeometry } from 'https://unpkg.com/three@0.139.2/examples/jsm/geometries/DecalGeometry.js';
+    import { InteractiveGroup } from 'https://unpkg.com/three@0.139.2/examples/jsm/interactive/InteractiveGroup.js';
+    import { HTMLMesh } from 'https://unpkg.com/three@0.139.2/examples/jsm/interactive/HTMLMesh.js';
+    import dat from 'https://cdn.skypack.dev/dat.gui';
+    import Stats from 'https://unpkg.com/three@0.139.2/examples/jsm/libs/stats.module.js';
+
+    // --------------------------------------------------
+    // 1) Constants and basic setup
+    // --------------------------------------------------
+    const radius = 0.08;        
+    const range = 5 - radius;   
+    let normal = new THREE.Vector3();
+    const relativeVelocity = new THREE.Vector3();
+    const clock = new THREE.Clock();
+    const group = new THREE.Group();
+    const stats = new Stats();
+    let hitCount = 0;
+
+    const DECALS = 30;
+    const BALLS = 50;
+    const FLIES = 8;
+
+    const gui = new dat.GUI();
+
+    // Parameters exposed to the GUI
+    const world = {
+        plane: {
+            width: 8,
+            height: 8,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.5,
+            color: 0x695d45
+        },
+        walls: {
+            color: 0x4f4f4f
+        },
+        wall3: {
+            color: 0x4fffff
+        },
+        camera: {
+            position: { x: 0, y: 3, z: 3 }
         }
+    };
 
-        const floorFolder = gui.addFolder("Floor");
-        const floorGeometryFolder = floorFolder.addFolder("Geometry");
-        const floorMaterialFolder = floorFolder.addFolder("Material");
+    // --------------------------------------------------
+    // 2) Scene, camera, renderer
+    // --------------------------------------------------
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x505050);
 
-        floorGeometryFolder.add(world.plane, 'width', 1, 8).onChange(generatePlane);
-        floorGeometryFolder.add(world.plane, 'height', 1, 8).onChange(generatePlane);
-        floorGeometryFolder.add(world.plane, 'wireframe').onChange(() => {
-            floor.material.wireframe = world.plane.wireframe;
-        });
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 2);
 
-        floorMaterialFolder.addColor(world.plane, 'color').onChange((value) => floor.material.color.set(value));
-        floorMaterialFolder.add(world.plane, 'transparent').onChange(() => {
-            floor.material.transparent = world.plane.transparent;
-        });
-        floorMaterialFolder.add(world.plane, 'opacity', 0, 1).step(0.01).onChange(() => {
-            floor.material.opacity = world.plane.opacity;
-        });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    document.body.appendChild(renderer.domElement);
 
-        floorGeometryFolder.open();
-        floorMaterialFolder.open();
-        floorFolder.open();
+    document.body.appendChild(VRButton.createButton(renderer));
+    renderer.xr.enabled = true;
 
-        function generatePlane() {
-            floor.geometry.dispose();
-            floor.geometry = new THREE.PlaneGeometry(world.plane.width, world.plane.height);
-        }
+    document.body.appendChild(stats.dom);
 
-        const wallFolder = gui.addFolder("Walls");
-        wallFolder.addColor(world.walls, 'color').onChange((value) => wallMaterial.color.set(value));
+    const guiGroup = new InteractiveGroup(renderer, camera);
+    scene.add(guiGroup);
 
-        wallFolder.addColor(world.wall3, 'color').onChange((value) => wallMaterial3.color.set(value));
+    const statsMesh = new HTMLMesh(stats.dom);
+    statsMesh.position.set(0, 0.2, -4.9);
+    statsMesh.scale.setScalar(5);
+    guiGroup.add(statsMesh);
 
-        const cameraFolder = gui.addFolder("Camera");
-        cameraFolder.add(world.camera.position, "x", -50, 50).onChange(cameraView);
-        cameraFolder.add(world.camera.position, "y", -50, 50).onChange(cameraView);
-        cameraFolder.add(world.camera.position, "z", -50, 50).onChange(cameraView);
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.minDistance = 1;
+    controls.maxDistance = 50;
 
-        function cameraView() {
-            camera.position.set(world.camera.position.x, world.camera.position.y, world.camera.position.z);
-        }
-      
-        // Setup scene, camera, renderer
-        const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x505050);
+    const spotLight = new THREE.SpotLight(0xffffff, 0.8);
+    spotLight.castShadow = true;
+    spotLight.position.set(0, 12, 0);
+    scene.add(spotLight);
+    scene.add(spotLight.target);
 
-        // Setup camera
-        const camera = new THREE.PerspectiveCamera(
-            75,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
+    const spotLight2 = new THREE.SpotLight(0xffffff, 0.5);
+    spotLight2.position.set(0, 5, 0);
+    scene.add(spotLight2);
+    scene.add(spotLight2.target);
+
+    // Basic "room" lines
+    const room = new THREE.LineSegments(
+        new BoxLineGeometry(10, 10, 10, 1, 1, 1),
+        new THREE.LineBasicMaterial({ color: 0x808080 })
+    );
+    room.geometry.translate(0, 3, 0);
+    scene.add(room);
+
+    // --------------------------------------------------
+    // 3) Floor & walls
+    // --------------------------------------------------
+    const floorGeometry = new THREE.PlaneGeometry(world.plane.width, world.plane.height);
+    const floorMaterial = new THREE.MeshStandardMaterial({
+        color: world.plane.color,
+        side: THREE.DoubleSide,
+        transparent: world.plane.transparent,
+        opacity: world.plane.opacity
+    });
+    const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+    floor.receiveShadow = true;
+    floor.rotation.x = Math.PI / 2;
+    scene.add(floor);
+
+    function generatePlane() {
+        floor.geometry.dispose();
+        floor.geometry = new THREE.PlaneGeometry(world.plane.width, world.plane.height);
+    }
+
+    const wallGeometry = new THREE.PlaneGeometry(10, 10);
+    const wallMaterial = new THREE.MeshStandardMaterial({
+        color: world.walls.color,
+        side: THREE.DoubleSide
+    });
+    const wallMaterial3 = new THREE.MeshStandardMaterial({
+        color: world.wall3.color,
+        side: THREE.DoubleSide
+    });
+
+    const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall1.position.set(0, 3, -5);
+    wall1.receiveShadow = true;
+    scene.add(wall1);
+
+    const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall2.position.set(5, 3, 0);
+    wall2.rotation.y = -Math.PI / 2;
+    wall2.receiveShadow = true;
+    scene.add(wall2);
+
+    const wall3 = new THREE.Mesh(wallGeometry, wallMaterial3);
+    wall3.position.set(0, 3, 5);
+    wall3.rotation.y = Math.PI;
+    wall3.receiveShadow = true;
+    scene.add(wall3);
+
+    const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
+    wall4.position.set(-5, 3, 0);
+    wall4.rotation.y = Math.PI / 2;
+    wall4.receiveShadow = true;
+    scene.add(wall4);
+
+    // dat.GUI folders
+    const floorFolder = gui.addFolder("Floor");
+    const floorGeometryFolder = floorFolder.addFolder("Geometry");
+    const floorMaterialFolder = floorFolder.addFolder("Material");
+
+    floorGeometryFolder.add(world.plane, 'width', 1, 8).onChange(generatePlane);
+    floorGeometryFolder.add(world.plane, 'height', 1, 8).onChange(generatePlane);
+    floorGeometryFolder.add(world.plane, 'wireframe').onChange(() => {
+        floor.material.wireframe = world.plane.wireframe;
+    });
+
+    floorMaterialFolder.addColor(world.plane, 'color').onChange(value => floor.material.color.set(value));
+    floorMaterialFolder.add(world.plane, 'transparent').onChange(() => {
+        floor.material.transparent = world.plane.transparent;
+    });
+    floorMaterialFolder.add(world.plane, 'opacity', 0, 1).step(0.01).onChange(() => {
+        floor.material.opacity = world.plane.opacity;
+    });
+
+    floorGeometryFolder.open();
+    floorMaterialFolder.open();
+    floorFolder.open();
+
+    const wallFolder = gui.addFolder("Walls");
+    wallFolder.addColor(world.walls, 'color').onChange(value => wallMaterial.color.set(value));
+    wallFolder.addColor(world.wall3, 'color').onChange(value => wallMaterial3.color.set(value));
+
+    const cameraFolder = gui.addFolder("Camera");
+    cameraFolder.add(world.camera.position, "x", -50, 50).onChange(cameraView);
+    cameraFolder.add(world.camera.position, "y", -50, 50).onChange(cameraView);
+    cameraFolder.add(world.camera.position, "z", -50, 50).onChange(cameraView);
+
+    function cameraView() {
+        camera.position.set(
+            world.camera.position.x,
+            world.camera.position.y,
+            world.camera.position.z
         );
-        camera.position.set(0, 2, 2);
+    }
 
-        // Setup renderer
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(window.devicePixelRatio);
-        renderer.outputEncoding = THREE.sRGBEncoding;
-        document.body.appendChild(renderer.domElement);
-        renderer.shadowMap.enabled = true;
-        renderer.shadowMapSoft = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    // --------------------------------------------------
+    // 4) GLTF loading (Planets + guns)
+    // --------------------------------------------------
+    const loader = new GLTFLoader().setPath("models/");
+    const mixers = [];
 
-        // Add VR DOM, initialize XR
-        document.body.appendChild(VRButton.createButton(renderer));
-        renderer.xr.enabled = true;
+    loader.load('Planets.gltf', function (gltf) {
+        const s = 0.6;
+        gltf.scene.scale.set(s, s, s);
+        gltf.scene.position.set(0, 9, 0);
+        gltf.scene.rotation.y = Math.PI / 2;
+        scene.add(gltf.scene);
 
-        // Add GUI
-        // const gui = new GUI( { width: 300 } );
-        const guiGroup = new InteractiveGroup(renderer, camera);
-        scene.add(guiGroup);
+        const mixer = new THREE.AnimationMixer(gltf.scene);
+        gltf.animations.forEach((clip) => {
+            mixer.clipAction(clip).setDuration(75).play();
+        });
+        mixers.push(mixer);
+    });
 
-        document.body.appendChild(stats.dom);
-
-        const statsMesh = new HTMLMesh(stats.dom);
-        statsMesh.position.set(0, 0.2, -4.9);
-        statsMesh.rotation.y = 0;
-        statsMesh.scale.setScalar(5);
-        guiGroup.add(statsMesh);
-
-        // const hitText = createText( 'Hit:' + hitCount, 0.2 );
-        // hitText.position.set(0, 0.5, -4.9);
-        // hitText.rotation.y = 0;
-        // guiGroup.add( hitText );
-
-        // Add camera orbit control
-        const controls = new OrbitControls(camera, renderer.domElement);
-        controls.listenToKeyEvents(window);
-
-        controls.enableDamping = true;
-        controls.dampingFactor = 0.05;
-        controls.screenSpacePanning = false;
-        controls.minDistance = 1;
-        controls.maxDistance = 50;
-
-        // Add spot light
-        const spotLight = new THREE.SpotLight(0xffffff, 0.8);
-        spotLight.castShadow = true;
-        spotLight.position.set(0, 12, 0);
-        spotLight.target.position.set(0, 0, 0);
-        spotLight.shadow.camera.near = 2;
-        spotLight.shadow.camera.far = 13;
-        spotLight.shadow.camera.fov = 30;
-        spotLight.shadow.radius = 1;
-        scene.add(spotLight);
-        scene.add(spotLight.target);
-
-        const spotLight2 = new THREE.SpotLight(0xffffff, 0.5);
-        spotLight2.position.set(0, 5, 0);
-        spotLight2.target.position.set(0, 9, 0);
-        spotLight2.shadow.camera.near = 2;
-        spotLight2.shadow.camera.far = 13;
-        spotLight2.shadow.camera.fov = 20;
-        scene.add(spotLight2);
-        scene.add(spotLight2.target);
-
-        // Create room space
-        const room = new THREE.LineSegments(
-            new BoxLineGeometry(10, 10, 10, 1, 1, 1),
-            new THREE.LineBasicMaterial({ color: 0x808080 })
-        );
-        room.geometry.translate(0, 3, 0);
-        scene.add(room);
-
-        // Add plane as floor
-        const floor = new THREE.Mesh(
-            new THREE.PlaneGeometry(8, 8),
-            new THREE.MeshStandardMaterial({
-                color: 0x695d45,
-                side: THREE.DoubleSide,
+    // Generate random balls
+    for (let i = 0; i < BALLS; i++) {
+        const sphere = new THREE.Mesh(
+            new THREE.SphereGeometry(radius, 16, 8),
+            new THREE.MeshLambertMaterial({
+                color: Math.random() * 0xffffff,
             })
         );
-        floor.material.transparent = true;
-        floor.material.opacity = 0.5;
-        floor.position.set(0, 0, 0);
-        floor.rotation.set(Math.PI / 2, 0, 0);
-        floor.receiveShadow = true;
-        scene.add(floor);
-
-        // Add plan as walls
-        const wallGeometry = new THREE.PlaneGeometry(10, 10);
-        const wallMaterial = new THREE.MeshStandardMaterial({
-            color: 0x4f4f4f,
-            side: THREE.DoubleSide,
-        });
-        const wallMaterial3 = new THREE.MeshStandardMaterial({
-            color: 0x4fffff,
-            side: THREE.DoubleSide,
-        });
-
-        const wall1 = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall1.position.set(0, 3, -5);
-        wall1.rotation.set(0, 0, 0);
-        wall1.receiveShadow = true;
-        scene.add(wall1);
-
-        const wall2 = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall2.position.set(5, 3, 0);
-        wall2.rotation.set(0, -Math.PI / 2, 0);
-        wall2.receiveShadow = true;
-        scene.add(wall2);
-
-        const wall3 = new THREE.Mesh(wallGeometry, wallMaterial3);
-        wall3.position.set(0, 3, 5);
-        wall3.rotation.set(0, Math.PI, 0);
-        wall3.receiveShadow = true;
-        scene.add(wall3);
-
-        const wall4 = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall4.position.set(-5, 3, 0);
-        wall4.rotation.set(0, Math.PI / 2, 0);
-        wall4.receiveShadow = true;
-        scene.add(wall4);
-
-        // Add animated model
-        const loader = new GLTFLoader().setPath("models/");
-        const mixers = [];
-
-		loader.load( 'Planets.gltf', function (gltf) {
-			const s = 0.6;
-			gltf.scene.scale.set( s, s, s );
-			gltf.scene.position.set(0, 9, 0);
-			gltf.scene.rotation.y = Math.PI / 2;
-			scene.add( gltf.scene );
-
-			const mixer = new THREE.AnimationMixer( gltf.scene );
-
-			mixer.clipAction( gltf.animations[0] ).setDuration( 75 ).play();
-			mixers.push( mixer );
-
-			mixer.clipAction( gltf.animations[1] ).setDuration( 75 ).play();
-			mixers.push( mixer );
-
-			mixer.clipAction( gltf.animations[2] ).setDuration( 75 ).play();
-			mixers.push( mixer );
-
-			mixer.clipAction( gltf.animations[3] ).setDuration( 75 ).play();
-			mixers.push( mixer );
-
-			mixer.clipAction( gltf.animations[4] ).setDuration( 75 ).play();
-			mixers.push( mixer );
-		} );
-
-        // Mass-generate balls
-        const t0 = performance.now();
-        for (let i = 0; i < BALLS; i++) {
-            const sphere = new THREE.Mesh(
-                new THREE.SphereGeometry(radius, 16, 8),
-                new THREE.MeshLambertMaterial({
-                    color: Math.random() * 0xffffff,
-                })
-            );
-            sphere.castShadow = true;
-            sphere.receiveShadow = true;
-
-            sphere.position.x = Math.random() * 4 - 2;
-            sphere.position.y = Math.random() * 4;
-            sphere.position.z = Math.random() * 4 - 2;
-
-            sphere.userData.velocity = new THREE.Vector3();
-            sphere.userData.velocity.x = Math.random() * 0.01 - 0.005;
-            sphere.userData.velocity.y = Math.random() * 0.01 - 0.005;
-            sphere.userData.velocity.z = Math.random() * 0.01 - 0.005;
-            room.add(sphere);
-        }
-        const t1 = performance.now();
-        console.log(`${t1 - t0} milliseconds.`);
-
-        // Add controllers
-        let controller1, controller2; // Right, Left
-        let controllerGrip1, controllerGrip2;
-
-        controller1 = renderer.xr.getController(0);
-        controller1.addEventListener("selectstart", onSelectStart);
-        controller1.addEventListener("selectend", onSelectEnd);
-        scene.add(controller1);
-
-        controller2 = renderer.xr.getController(1);
-        controller2.addEventListener("selectstart", onSelectStart);
-        controller2.addEventListener("selectend", onSelectEnd);
-        scene.add(controller2);
-
-        // Add model to controller
-        const controllerModelFactory = new XRControllerModelFactory();
-
-        loader.load("Splashgun.gltf", function (gltf) {
-            gltf.scene.scale.set(0.03, 0.03, 0.03);
-            gltf.scene.rotation.y = THREE.Math.degToRad(180);
-            gltf.scene.position.set(-0.01, -0.01, 0);
-            controller1.add(gltf.scene); // Right
-        });
-
-        loader.load("Splashgun.gltf", function (gltf) {
-            gltf.scene.scale.set(0.03, 0.03, 0.03);
-            gltf.scene.rotation.y = THREE.Math.degToRad(180);
-            gltf.scene.position.set(-0.01, -0.01, 0);
-            controller2.add(gltf.scene); // Left
-        });
-
-        // Add pointing line for controllers
-        const lineGeometry = new THREE.BufferGeometry().setFromPoints([
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector3(0, 0, -1),
-        ]);
-
-        const lineMaterial = new THREE.LineBasicMaterial({
-            color: 0xffffff,
-        });
-
-        const line = new THREE.Line(lineGeometry, lineMaterial);
-        line.name = "line";
-        line.scale.z = 5;
-
-        // Attach line to controllers
-        controller1.add(line.clone());
-        controller2.add(line.clone());
-
-        let raycaster;
-        raycaster = new THREE.Raycaster();
-        const intersected = [];
-        const tempMatrix = new THREE.Matrix4();
-
-        // Controller select function
-        function onSelectStart(event) {
-            const controller = event.target;
-            const intersections = getIntersections(controller);
-
-            if (intersections.length > 0) {
-                const intersection = intersections[0];
-
-                const object = intersection.object;
-                object.material.emissive.b = 1;
-                object.position.copy(controller.position);
-                object.rotation.copy(controller.rotation);
-                object.translateZ(-0.3);
-
-                controller.attach(object);
-                controller.userData.selected = object;
-            }
-        }
-
-        // Controller unselect function
-        function onSelectEnd(event) {
-            const controller = event.target;
-
-            if (controller.userData.selected !== undefined) {
-
-                const object = controller.userData.selected;
-                object.material.emissive.b = 0;
-
-                object.userData.velocity.x = (Math.random() - 0.5) * 3;
-                object.userData.velocity.y = (Math.random() - 0.5) * 3;
-                object.userData.velocity.z = Math.random() - 9;
-                object.userData.velocity.applyQuaternion(controller.quaternion);
-
-                room.attach(object);
-
-                controller.userData.selected = undefined;
-            }
-        }
-
-        // Controller intersect functions
-        function getIntersections(controller) {
-            tempMatrix.identity().extractRotation(controller.matrixWorld);
-
-            raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
-            raycaster.ray.direction.set(0, 0, - 1).applyMatrix4(tempMatrix);
-
-            return raycaster.intersectObjects(room.children, true);
-        }
-
-        function intersectObjects(controller) {
-            if (controller.userData.selected !== undefined) return;
-
-            const line = controller.getObjectByName('line');
-            const intersections = getIntersections(controller);
-
-            if (intersections.length > 0) {
-                const intersection = intersections[0];
-
-                const object = intersection.object;
-                object.material.emissive.r = 1;
-                intersected.push(object);
-
-                line.scale.z = intersection.distance;
-
-            } else {
-                line.scale.z = 5;
-            }
-        }
-
-        function cleanIntersected() {
-            while (intersected.length) {
-                const object = intersected.pop();
-                object.material.emissive.r = 0;
-            }
-        }
-
-        // Window resize
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        window.addEventListener("resize", onWindowResize, false);
-
-        // Decal texture and material and array
-        const textureLoader = new THREE.TextureLoader();
-        const decalDiffuse = textureLoader.load(
-            "textures/decal/decal-diffuse.png"
+        sphere.castShadow = true;
+        sphere.receiveShadow = true;
+        sphere.position.x = Math.random() * 4 - 2;
+        sphere.position.y = Math.random() * 4;
+        sphere.position.z = Math.random() * 4 - 2;
+        sphere.userData.velocity = new THREE.Vector3(
+            Math.random() * 0.01 - 0.005,
+            Math.random() * 0.01 - 0.005,
+            Math.random() * 0.01 - 0.005
         );
-        const decalNormal = textureLoader.load(
-            "textures/decal/decal-normal.jpg"
+        room.add(sphere);
+    }
+
+    // --------------------------------------------------
+    // 5) VR controllers & events
+    // --------------------------------------------------
+    let controller1, controller2;
+    controller1 = renderer.xr.getController(0);
+    controller1.addEventListener("selectstart", onSelectStart);
+    controller1.addEventListener("selectend", onSelectEnd);
+    scene.add(controller1);
+
+    controller2 = renderer.xr.getController(1);
+    controller2.addEventListener("selectstart", onSelectStart);
+    controller2.addEventListener("selectend", onSelectEnd);
+    scene.add(controller2);
+
+    const controllerModelFactory = new XRControllerModelFactory();
+
+    loader.load("Splashgun.gltf", function (gltf) {
+        gltf.scene.scale.set(0.03, 0.03, 0.03);
+        gltf.scene.rotation.y = THREE.Math.degToRad(180);
+        gltf.scene.position.set(-0.01, -0.01, 0);
+        controller1.add(gltf.scene);
+    });
+
+    loader.load("Splashgun.gltf", function (gltf) {
+        gltf.scene.scale.set(0.03, 0.03, 0.03);
+        gltf.scene.rotation.y = THREE.Math.degToRad(180);
+        gltf.scene.position.set(-0.01, -0.01, 0);
+        controller2.add(gltf.scene);
+    });
+
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(0, 0, 0),
+        new THREE.Vector3(0, 0, -1),
+    ]);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+    const line = new THREE.Line(lineGeometry, lineMaterial);
+    line.name = "line";
+    line.scale.z = 5;
+    controller1.add(line.clone());
+    controller2.add(line.clone());
+
+    let raycaster = new THREE.Raycaster();
+    const intersected = [];
+    const tempMatrix = new THREE.Matrix4();
+
+    function onSelectStart(event) {
+        const controller = event.target;
+        const intersections = getIntersections(controller);
+        if (intersections.length > 0) {
+            const intersection = intersections[0];
+            const object = intersection.object;
+            object.material.emissive.b = 1;
+            object.position.copy(controller.position);
+            object.rotation.copy(controller.rotation);
+            object.translateZ(-0.3);
+            controller.attach(object);
+            controller.userData.selected = object;
+        }
+    }
+
+    function onSelectEnd(event) {
+        const controller = event.target;
+        if (controller.userData.selected !== undefined) {
+            const object = controller.userData.selected;
+            object.material.emissive.b = 0;
+            // Throw the object
+            object.userData.velocity.x = (Math.random() - 0.5) * 3;
+            object.userData.velocity.y = (Math.random() - 0.5) * 3;
+            object.userData.velocity.z = Math.random() - 9;
+            object.userData.velocity.applyQuaternion(controller.quaternion);
+            room.attach(object);
+            controller.userData.selected = undefined;
+        }
+    }
+
+    function getIntersections(controller) {
+        tempMatrix.identity().extractRotation(controller.matrixWorld);
+        raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+        return raycaster.intersectObjects(room.children, true);
+    }
+
+    function intersectObjects(controller) {
+        if (controller.userData.selected !== undefined) return;
+        const line = controller.getObjectByName('line');
+        const intersections = getIntersections(controller);
+        if (intersections.length > 0) {
+            const intersection = intersections[0];
+            const object = intersection.object;
+            object.material.emissive.r = 1;
+            intersected.push(object);
+            line.scale.z = intersection.distance;
+        } else {
+            line.scale.z = 5;
+        }
+    }
+
+    function cleanIntersected() {
+        while (intersected.length) {
+            const obj = intersected.pop();
+            obj.material.emissive.r = 0;
+        }
+    }
+
+    // --------------------------------------------------
+    // 6) Decals & "splash" effect
+    // --------------------------------------------------
+    const textureLoader = new THREE.TextureLoader();
+    const decalDiffuse = textureLoader.load("textures/decal/decal-diffuse.png");
+    const decalNormal = textureLoader.load("textures/decal/decal-normal.jpg");
+    const decalArr = [];
+
+    const decalMaterial = new THREE.MeshPhongMaterial({
+        specular: 0x444444,
+        map: decalDiffuse,
+        normalMap: decalNormal,
+        normalScale: new THREE.Vector2(1, 1),
+        shininess: 30,
+        transparent: true,
+        depthTest: true,
+        depthWrite: false,
+        polygonOffset: true,
+        polygonOffsetFactor: -4
+    });
+
+    function splash(wall, object) {
+        const objectColor = object.material.color.getHexString();
+        const mat = decalMaterial.clone();
+        mat.color.set('#' + objectColor);
+        const scale = Math.random() + 1;
+        const size = new THREE.Vector3(scale, scale, scale);
+        const randomZ = Math.random() * 360;
+        const rotation = new THREE.Euler(0, wall.rotation.y, randomZ);
+        const m = new THREE.Mesh(
+            new DecalGeometry(wall, object.position, rotation, size),
+            mat
         );
-        const decalArr = [];
-        const decalMaterial = new THREE.MeshPhongMaterial({
-            specular: 0x444444,
-            map: decalDiffuse,
-            normalMap: decalNormal,
-            normalScale: new THREE.Vector2(1, 1),
-            shininess: 30,
-            transparent: true,
-            depthTest: true,
-            depthWrite: false,
-            polygonOffset: true,
-            polygonOffsetFactor: -4,
-            wireframe: false,
-        });
+        decalArr.push(m);
+        scene.add(m);
+        if (decalArr.length >= DECALS) {
+            const firstElement = decalArr.shift();
+            scene.remove(firstElement);
+        }
+    }
 
-        // Splash on wall if being hit by object(ball)
-        function splash(wall, object) {
-            // Get Hex value of object color, assign it to decal
-            const objectColor = object.material.color.getHexString();
-            const material = decalMaterial.clone();
-            material.color.set("#" + objectColor);
-
-            // Randomize decal size
-            const scale = Math.random() + 1;
-            const size = new THREE.Vector3(scale, scale, scale);
-
-            // Randomize decal rotation
-            const randomz = Math.random() * 360;
-            const rotation = new THREE.Euler(0, wall.rotation.y, randomz);
-
-            const m = new THREE.Mesh(
-                new DecalGeometry(wall, object.position, rotation, size),
-                material
-            );
-
-            // Add decal to scene
-            decalArr.push(m);
-            scene.add(m);
-
-            // Limit decal numbers in the scene
-            if (decalArr.length >= DECALS) {
-                const firstElement = decalArr.shift();
-                scene.remove(firstElement);
+    // --------------------------------------------------
+    // 7) Flies that float around
+    // --------------------------------------------------
+    function updateFlies() {
+        const time = clock.getElapsedTime();
+        const lastBall = room.children[room.children.length - 1];
+        if (group.children.length < FLIES) {
+            loader.load("Fly.gltf", function (gltf) {
+                gltf.scene.scale.set(0.1, 0.1, 0.1);
+                for (let i = group.children.length; i < FLIES; i++) {
+                    const flyModel = gltf.scene.clone();
+                    flyModel.castShadow = true;
+                    flyModel.receiveShadow = true;
+                    flyModel.userData.velocity = new THREE.Vector3();
+                    flyModel.userData.velocity.x = Math.random() * 0.01 - 0.005;
+                    flyModel.userData.velocity.z = Math.random() * 0.01 - 0.005;
+                    group.add(flyModel);
+                    scene.add(group);
+                }
+            });
+        }
+        for (let i = 0; i < group.children.length; i++) {
+            const fly = group.children[i];
+            // Simple "bob" in y
+            fly.position.x += fly.userData.velocity.x;
+            fly.position.y = Math.cos(time) * 0.3 + 3;
+            fly.position.z += fly.userData.velocity.z;
+            // Bouncing inside room
+            if (fly.position.x < -5 || fly.position.x > 5) {
+                fly.position.x = THREE.MathUtils.clamp(fly.position.x, -5, 5);
+                fly.userData.velocity.x = -fly.userData.velocity.x;
+            }
+            if (fly.position.z < -5 || fly.position.z > 5) {
+                fly.position.z = THREE.MathUtils.clamp(fly.position.z, -5, 5);
+                fly.userData.velocity.z = -fly.userData.velocity.z;
+            }
+            // Collision with last ball
+            if (
+                lastBall &&
+                Math.abs(lastBall.position.x - fly.position.x) <= 0.5 &&
+                Math.abs(lastBall.position.y - fly.position.y) <= 0.5 &&
+                Math.abs(lastBall.position.z - fly.position.z) <= 0.5
+            ) {
+                group.remove(fly);
+                hitCount++;
+                console.log('Hit Count =', hitCount);
             }
         }
+    }
 
-
-        // Generate fly, define movement range, velocity and collision
-        function flyfly() {
-            const time = clock.getElapsedTime();
-            const range = 5;
-            const lastball = room.children[room.children.length - 1];
-
-            if (group.children.length < FLIES) {
-                loader.load("Fly.gltf", function (gltf) {
-                    gltf.scene.scale.set(0.1, 0.1, 0.1);
-
-                    for (let i = group.children.length; i < FLIES; i++) {
-                        const flyModel = gltf.scene.clone();
-
-                        flyModel.castShadow = true;
-                        flyModel.receiveShadow = true;
-
-                        flyModel.userData.velocity = new THREE.Vector3();
-                        flyModel.userData.velocity.x = Math.random() * 0.01 - 0.005;
-                        // flyModel.userData.velocity.y = Math.random() * 0.01 - 0.005;
-                        flyModel.userData.velocity.z = Math.random() * 0.01 - 0.005;
-
-                        group.add(flyModel);
-                        scene.add(group);
-
-                        console.log("group.children.length", group.children.length, "flies", FLIES);
-                    }
-                });
+    // --------------------------------------------------
+    // 8) Ball physics & collisions
+    // --------------------------------------------------
+    function ballPhysics(delta) {
+        for (let i = 0; i < room.children.length; i++) {
+            const object = room.children[i];
+            object.position.x += object.userData.velocity.x * delta;
+            object.position.y += object.userData.velocity.y * delta;
+            object.position.z += object.userData.velocity.z * delta;
+            if (object.position.x < -range || object.position.x > range) {
+                object.position.x = THREE.MathUtils.clamp(object.position.x, -range, range);
+                object.userData.velocity.x = -object.userData.velocity.x;
             }
-
-            for (let i = 0; i < group.children.length; i++) {
-                const fly = group.children[i];
-
-                fly.position.x += fly.userData.velocity.x;
-                fly.position.y = Math.cos(time) * 0.3 + 3;
-                fly.position.z += fly.userData.velocity.z;
-
-                if (fly.position.x < -range || fly.position.x > range) {
-                    fly.position.x = THREE.MathUtils.clamp(fly.position.x, -range, range);
-                    fly.userData.velocity.x = -fly.userData.velocity.x;
-                }
-
-                if (fly.position.z < -range || fly.position.z > range) {
-                    fly.position.z = THREE.MathUtils.clamp(fly.position.z, -range, range);
-                    fly.userData.velocity.z = -fly.userData.velocity.z;
-                }
-
-                if (
-                    Math.abs(lastball.position.x - fly.position.x) <= 0.5 &&
-                    Math.abs(lastball.position.y - fly.position.y) <= 0.5 &&
-                    Math.abs(lastball.position.z - fly.position.z) <= 0.5) {
-                    group.remove(fly);
-                    hitCount++;
-                    console.log(hitCount);
+            if (object.position.y < radius || object.position.y > 6) {
+                object.position.y = Math.max(object.position.y, radius);
+                object.userData.velocity.x *= 0.98;
+                object.userData.velocity.y = -object.userData.velocity.y * 0.8;
+                object.userData.velocity.z *= 0.98;
+            }
+            if (object.position.z < -range || object.position.z > range) {
+                object.position.z = THREE.MathUtils.clamp(object.position.z, -range, range);
+                object.userData.velocity.z = -object.userData.velocity.z;
+            }
+            // Splash decals on walls
+            if (object.position.z === -range) splash(wall1, object);
+            if (object.position.x === range)  splash(wall2, object);
+            if (object.position.z === range)  splash(wall3, object);
+            if (object.position.x === -range) splash(wall4, object);
+            // Check collisions with other balls
+            for (let j = i + 1; j < room.children.length; j++) {
+                const object2 = room.children[j];
+                normal.copy(object.position).sub(object2.position);
+                const distance = normal.length();
+                if (distance < 2 * radius) {
+                    normal.multiplyScalar(0.5 * distance - radius);
+                    object.position.sub(normal);
+                    object2.position.add(normal);
+                    normal.normalize();
+                    relativeVelocity.copy(object.userData.velocity).sub(object2.userData.velocity);
+                    const collisionImpulse = relativeVelocity.dot(normal);
+                    normal.multiplyScalar(collisionImpulse);
+                    object.userData.velocity.sub(normal);
+                    object2.userData.velocity.add(normal);
                 }
             }
+            // Gravity
+            object.userData.velocity.y -= 9.8 * delta;
         }
+    }
 
-        // Define ball movement range, velocity and collision
-        function ballPhysics(delta) {
-            for (let i = 0; i < room.children.length; i++) {
-                const object = room.children[i];
+    // --------------------------------------------------
+    // 9) Render / animation loop
+    // --------------------------------------------------
+    function render() {
+        cleanIntersected();
+        intersectObjects(controller1);
+        intersectObjects(controller2);
+        const delta = clock.getDelta() * 0.8;
+        ballPhysics(delta);
+        updateFlies();
+        mixers.forEach(m => m.update(delta));
+    }
 
-                object.position.x += object.userData.velocity.x * delta;
-                object.position.y += object.userData.velocity.y * delta;
-                object.position.z += object.userData.velocity.z * delta;
+    renderer.setAnimationLoop(() => {
+        render();
+        renderer.render(scene, camera);
+        stats.update();
+        if (statsMesh.material.map) statsMesh.material.map.update();
+    });
 
-                // Keep objects inside room
-                if (object.position.x < -range || object.position.x > range) {
-                    object.position.x = THREE.MathUtils.clamp(object.position.x, -range, range);
-                    object.userData.velocity.x = -object.userData.velocity.x;
-                }
+    // Handle window resizing
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 
-                if (object.position.y < radius || object.position.y > 6) {
-                    object.position.y = Math.max(object.position.y, radius);
-
-                    object.userData.velocity.x *= 0.98;
-                    object.userData.velocity.y = -object.userData.velocity.y * 0.8;
-                    object.userData.velocity.z *= 0.98;
-                }
-
-                if (object.position.z < -range || object.position.z > range) {
-                    object.position.z = THREE.MathUtils.clamp(object.position.z, -range, range);
-                    object.userData.velocity.z = -object.userData.velocity.z;
-                }
-
-                // Splash when object hits the wall
-                if (object.position.z == -range) splash(wall1, object);
-                if (object.position.x == range) splash(wall2, object);
-                if (object.position.z == range) splash(wall3, object);
-                if (object.position.x == -range) splash(wall4, object);
-
-                // Define collision between objects
-                for (let j = i + 1; j < room.children.length; j++) {
-                    const object2 = room.children[j];
-
-                    normal.copy(object.position).sub(object2.position);
-
-                    const distance = normal.length();
-
-                    if (distance < 2 * radius) {
-                        normal.multiplyScalar(0.5 * distance - radius);
-
-                        object.position.sub(normal);
-                        object2.position.add(normal);
-
-                        normal.normalize();
-
-                        relativeVelocity.copy(object.userData.velocity).sub(object2.userData.velocity);
-
-                        normal = normal.multiplyScalar(relativeVelocity.dot(normal));
-
-                        object.userData.velocity.sub(normal);
-                        object2.userData.velocity.add(normal);
-                    }
-                }
-                object.userData.velocity.y -= 9.8 * delta;
-            }
-        }
-
-        //
-        function render() {
-            cleanIntersected();
-
-            intersectObjects(controller1);
-            intersectObjects(controller2);
-
-            const delta = clock.getDelta() * 0.8; // Slow down simulation
-
-            ballPhysics(delta);
-            flyfly();
-			for ( const mixer of mixers ) mixer.update( delta );
-
-        }
-
-        renderer.setAnimationLoop(function () {
-            render();
-            renderer.render(scene, camera);
-            stats.update();
-            statsMesh.material.map.update();
-            // hitText.update();
-
-        });
-
-        // Add helper
-        // scene.add(new THREE.AxesHelper(5));
-        // scene.add(new THREE.CameraHelper(spotLight.shadow.camera));
-        scene.add(new THREE.GridHelper(10, 10));
-
-    </script>
+    // Uncomment for debugging if needed:
+    // scene.add(new THREE.AxesHelper(5));
+    // scene.add(new THREE.GridHelper(10, 10));
+</script>
 </body>
-
 </html>
